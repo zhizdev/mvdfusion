@@ -13,14 +13,14 @@ Given an input RGB image, **MVD-Fusion** generates multi-view RGB-D images using
 
 
 ## Shoutouts and Credits
-This project is built on top of open-source code. We thank the open-source research community and credit our use of parts of [Stable Diffusion](https://github.com/CompVis/stable-diffusion), [kiuikit](), [Zero-1-to-3](), and [Syncdreamer]().
+This project is built on top of open-source code. We thank the open-source research community and credit our use of parts of [Stable Diffusion](https://github.com/CompVis/stable-diffusion), [kiuikit](https://github.com/ashawkey/kiuikit), [Zero-1-to-3](https://github.com/cvlab-columbia/zero123), and [Syncdreamer](https://github.com/liuyuan-pal/SyncDreamer).
 
 
 ## Code
 Our code release contains:
 
 1. Code for inference
-2. Code for training
+2. Code for training (Coming Soon!)
 3. Pretrained weights on Objaverse
 
 For bugs and issues, please open an issue on GitHub and I will try to address it promptly.
@@ -62,6 +62,9 @@ Output artifact will be saved to `demo/` by default.
 
 
 ## Training
+
+*Training code is arriving soon!
+
 Early access training code is provided in `train.py`. Please follow the evaluation tutorial above to setup the environment and pretrained  weights. It is recommended to directly modify `configs/mvd_train.yaml` to specify the experiment directory and set the training hyperparameters. We show training flags below. We recommend a minimum of 4 GPUs for training. 
 
 ```shell

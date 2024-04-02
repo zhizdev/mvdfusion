@@ -16,7 +16,7 @@ import torch.distributed as dist
 import torch.multiprocessing as mp
 from pytorch_lightning import seed_everything
 
-from utils.common_utils import rank_zero_print, AverageMeter, uncollate, unnormalize
+from utils.common_utils import rank_zero_print, AverageMeter, uncollate, unnormalize, dict_to_device, split_list
 from utils.data_sampler_utils import StatefulDistributedSampler
 from utils.load_model import instantiate_from_config
 
@@ -48,52 +48,41 @@ def train(gpu, args):
     assert config['dataset']['scene_batch_size'] == 1, f'does not support scene batch size greater than 1'
 
     #@ DEFINE TRAIN PARAMS
-    max_epoch = config['trainer']['epochs']
-    max_local_step = len(train_loader)
-    loss_interval = config['saver']['loss_interval']
-    print_interval = float(config['saver']['print_interval'])
-    vis_interval = config['saver']['vis_interval']
-    save_interval = config['saver']['save_interval']
-    trainer_config = dict(config['trainer'])
     inference_config = dict(config['inference'])
-
-    start_epoch = epoch
-    if rank == 0:
-        loss_list = []
-        loss_running = AverageMeter()        
-        step_start = time.time()
-        first_local_step = True
-        print('starting testing...')
-
 
     #@ EPOCH LOOP
     model.eval()
-    eval_step = 0
 
     start_time = time.time()
     eta = 0.0
     eta_min = 0.0
     eta_hours = 0.0
     config['inference']['eval_num'] = config['inference'].get('eval_num', 20)
-    for bi, batch in enumerate(train_loader):
+
+    total_val_list = torch.arange(config['inference']['eval_num'])
+    val_list = split_list(total_val_list, args.gpus)[gpu]
+    print(f'gpu {gpu}: {val_list}')
+
+    #@ 
+    for bi, val_idx in enumerate(val_list):
 
         if bi > 0:
             elapsed_time = time.time() - start_time
-            remaining_nums = config['inference']['eval_num'] - bi
+            remaining_nums = len(val_list) - bi
             eta_rate = float(bi) / elapsed_time
             eta = remaining_nums / eta_rate
             eta_min = (eta / 60) % 60
             eta_hours = (eta // 3600)
 
-        print(f'evaluating | scene: {bi}/{config["inference"]["eval_num"]} | eta: {eta_hours} hours {eta_min} mins')
+        print(f'evaluating scene {val_idx} on gpu {gpu} | scene: {bi}/{len(val_list)} | eta: {eta_hours} hours {eta_min} mins')
         
-        batch = uncollate(batch, to_device=f'cuda:{gpu}')
+        batch = train_dataset.__getitem__(val_idx)
+        batch = dict_to_device(batch, to_device=f'cuda:{gpu}')
 
         #@ INFERENCE
         with torch.no_grad():
-            model_outputs = model.module.sample(batch, inference_config, cfg_scale=inference_config['cfg_scale'], return_input=True, depth=True, )
-        
-        #@ PROCESS OUTPUTS
+            model_outputs = model.module.sample(batch, inference_config, cfg_scale=inference_config['cfg_scale'], return_input=True, depth=True, verbose=False)
+
         if len(model_outputs) == 3:
             model_output, batch_latents, input_latents = model_outputs
         elif len(model_outputs) == 5:
@@ -112,23 +101,17 @@ def train(gpu, args):
         os.makedirs(save_dir, exist_ok=True)
 
         n_frames = inference_config['train_batch_size']
-        jpg_path = f'{save_dir}/{global_step:07d}_eval_{eval_step:03d}_n{n_frames}.jpg'
-        gif_path = f'{save_dir}/{global_step:07d}_eval_{eval_step:03d}_n{n_frames}.gif'
-
+        jpg_path = f'{save_dir}/{global_step:07d}_eval_{val_idx:03d}_n{n_frames}.jpg'
+        gif_path = f'{save_dir}/{global_step:07d}_eval_{val_idx:03d}_n{n_frames}.gif'
         
         vis_pred = pred_rgb
         vis_pred_wide = np.hstack(vis_pred)
         vis_gt_wide = np.hstack(gt_rgb)
 
         #@ SAVE IMAGE
-        if not '_sd_' in args.config:
-            vis = np.hstack((input_rgb[0], vis_pred_wide))
-            vis_top = np.hstack((input_rgb[0], vis_gt_wide))
-        else:
-            vis = vis_pred_wide
-            vis_top = vis_gt_wide
+        vis = vis_pred_wide
+        vis_top = vis_gt_wide
         vis = np.vstack((vis, vis_top))
-        #print(vis.shape, vis.min(), vis.max())
         imageio.imwrite(jpg_path, (vis*255).astype(np.uint8))
 
         #@ SAVE GIF
@@ -138,42 +121,33 @@ def train(gpu, args):
                     writer.append_data(((vis_single)*255).astype(np.uint8))
         print('saved video', gif_path)
 
-        if 'depth' in args.config:
-            pred_depth = unnormalize(model_output[:,4:,...])
-            input_depth = unnormalize(input_latents[:,4:,...])
-            gt_depth = unnormalize(batch_latents[:,4:,...])
+        pred_depth = unnormalize(model_output[:,4:,...])
+        input_depth = unnormalize(input_latents[:,4:,...])
+        gt_depth = unnormalize(batch_latents[:,4:,...])
 
-            # pred_depth = torch.nn.functional.interpolate(pred_depth, scale_factor=8.0).clip(0.0, 1.0)
-            # input_depth = torch.nn.functional.interpolate(input_depth, scale_factor=8.0)
-            # gt_depth = torch.nn.functional.interpolate(gt_depth, scale_factor=8.0)
-            pred_depth = pred_depth.clip(0.0, 1.0)
+        pred_depth = pred_depth.clip(0.0, 1.0)
 
-            pred_depth = rearrange(pred_depth, 'b c h w -> b h w c').expand(-1,-1,-1,3).detach().cpu().numpy()
-            input_depth = rearrange(input_depth, 'b c h w -> b h w c').expand(-1,-1,-1,3).detach().cpu().numpy()
-            gt_depth = rearrange(gt_depth, 'b c h w -> b h w c').expand(-1,-1,-1,3).detach().cpu().numpy()
+        pred_depth = rearrange(pred_depth, 'b c h w -> b h w c').expand(-1,-1,-1,3).detach().cpu().numpy()
+        input_depth = rearrange(input_depth, 'b c h w -> b h w c').expand(-1,-1,-1,3).detach().cpu().numpy()
+        gt_depth = rearrange(gt_depth, 'b c h w -> b h w c').expand(-1,-1,-1,3).detach().cpu().numpy()
 
-            vis_pred_depth = np.hstack(pred_depth)
-            vis_input_depth = np.hstack(input_depth)
-            vis_gt_depth = np.hstack(gt_depth)
-            #print(vis_pred_depth.shape, vis_gt_depth.shape, vis_input_depth.shape)
-            vis_depth = np.hstack((vis_input_depth, vis_pred_depth))
-            vis_depth_top = np.hstack((vis_input_depth, vis_gt_depth))
-            vis_depth = np.vstack((vis_depth_top, vis_depth))
-            imageio.imwrite(jpg_path.replace('.jpg', '_depth.png'), (vis_depth*255).astype(np.uint8))
+        vis_pred_depth = np.hstack(pred_depth)
+        vis_input_depth = np.hstack(input_depth)
+        vis_gt_depth = np.hstack(gt_depth)
+        vis_depth = np.hstack((vis_input_depth, vis_pred_depth))
+        vis_depth_top = np.hstack((vis_input_depth, vis_gt_depth))
+        vis_depth = np.vstack((vis_depth_top, vis_depth))
+        imageio.imwrite(jpg_path.replace('.jpg', '_depth.png'), (vis_depth*255).astype(np.uint8))
 
-            depth_npz_path = jpg_path.replace('.jpg', '_depth.npy')
-            with open(depth_npz_path, 'wb') as fp:
-                np.save(fp, vis_depth)
+        depth_npz_path = jpg_path.replace('.jpg', '_depth.npy')
+        with open(depth_npz_path, 'wb') as fp:
+            np.save(fp, vis_depth)
 
-            gif_path = jpg_path.replace('.jpg', '_depth.gif')
-            with imageio.get_writer(gif_path, mode='I', duration=0.2) as writer:
-                for j in range(len(vis_pred)):
-                    vis_single = np.hstack((pred_depth[j], gt_depth[j]))
-                    writer.append_data(((vis_single)*255).astype(np.uint8))
-
-        eval_step += 1
-        if eval_step >= config['inference']['eval_num']:
-            break   
+        gif_path = jpg_path.replace('.jpg', '_depth.gif')
+        with imageio.get_writer(gif_path, mode='I', duration=0.2) as writer:
+            for j in range(len(vis_pred)):
+                vis_single = np.hstack((pred_depth[j], gt_depth[j]))
+                writer.append_data(((vis_single)*255).astype(np.uint8))
             
 
 def load_model(gpu, config):
@@ -222,7 +196,7 @@ def main():
                         help='last digit of port (default: 1234[1])')
     parser.add_argument('-b', '--backend', type=str, default='nccl', metavar='s',
                         help='nccl')
-    parser.add_argument('-c', '--config', type=str, default='configs/viewfusion_eval.yaml', metavar='S',
+    parser.add_argument('-c', '--config', type=str, default='configs/mvd_gso.yaml', metavar='S',
                         help='config file')
     args = parser.parse_args()
 

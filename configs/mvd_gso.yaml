@@ -98,7 +98,7 @@ inference:
   input_batch_size: 1
   random_views: false
   cfg_scale: 2.5
-  eval_num: 50
+  eval_num: 30
   vis_dir: 'vis_test_gso_eval/'
   stage: 'test'
 
