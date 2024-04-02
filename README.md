@@ -37,8 +37,7 @@ We provide two evaluation dataset, Google Scanned Objects (GSO) and SyncDreamer 
 
 ## Pretrained Weights
 MVD-Fusion requires Zero-1-to-3 weights, CLIP ViT weights, and finetuned MVD-Fusion weights. 
-1. Find SparseFusion weights [here](https://drive.google.com/drive/folders/1Czsnf-PVjwH-HL7K5mTt_kF9u-PVWRyL?usp=share_link). Please download and put in `checkpoints/sf/{category_name}`. 
-2. Download Stable Diffusion v-1-3 weights [here](https://huggingface.co/CompVis/stable-diffusion-v-1-3-original) and rename `sd-v1-3.ckpt` to `sd-v1-3-vae.ckpt`. While our code is compatible with the default downloaded weight, we only use the VAE weights from Stable Diffusion. We assume the default location and filename of the vae checkpoint to be `checkpoints/sd/sd-v1-3-vae.ckpt`. 
+1. Find MVD-Fusion weights [here]() and download them to `weights/`, a full set of weights will have `weights/clip_vit_14.ckpt`, `weights/mvdfusion_sep23.pt`, `weights/zero123_105000_cc.ckpt`, and `weights/zero123_105000.ckpt`.
 
 ## Evaluation
 
