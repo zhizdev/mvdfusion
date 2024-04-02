@@ -6,8 +6,6 @@ out/
 logs/
 *.zip
 *.gif
-*.jpg
-*.png
 *.gz
 *.tar
 *.pt
