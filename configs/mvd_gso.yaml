@@ -2,9 +2,9 @@ model:
   base_learning_rate: 1.0e-04
   target: mvdfusion.viewfusion_zero_depth_rgb.ViewFusion
   params:
-    vae_path: weights/zero123_105000.ckpt
+    vae_path: null
     clip_path: weights/clip_vit_14.ckpt
-    unet_path: weights/zero123_105000.ckpt
+    unet_path: null
     unet_cc_path: weights/zero123_105000_cc.ckpt
 
     z_scale_factor: 0.18215
