@@ -92,6 +92,7 @@ def huber(x, y, scaling=0.1):
     loss = ((1 + diff_sq / (scaling**2)).clamp(1e-4).sqrt() - 1) * float(scaling)
     return loss
 
+#@ From PyTorch3D
 def sample_images_at_mc_locs(target_images, sampled_rays_ba, sampled_rays_xy):
     """
     Given a set of Monte Carlo pixel locations `sampled_rays_xy`,

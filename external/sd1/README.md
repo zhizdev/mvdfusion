@@ -1,0 +1,1 @@
+This directory is from [Stable Diffusion](https://github.com/CompVis/stable-diffusion) and inherits their copyright.

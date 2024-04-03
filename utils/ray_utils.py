@@ -1,3 +1,5 @@
+#@ Modified from https://github.com/facebookresearch/pytorch3d/blob/main/pytorch3d/renderer/implicit/utils.py
+
 import warnings
 from typing import Optional, Tuple, Union, NamedTuple
 import dataclasses
