@@ -1,0 +1,120 @@
+model:
+  base_learning_rate: 1.0e-04
+  target: mvdfusion.viewfusion_zero_depth_rgb.ViewFusion
+  params:
+    vae_path: null
+    clip_path: weights/clip_vit_14.ckpt
+    unet_path: null
+    unet_cc_path: weights/zero123_105000_cc.ckpt
+
+    z_scale_factor: 0.18215
+    objective: 'noise'
+    loss_type: 'l2'
+    embed_camera_pose: true
+    finetune_projection: true
+    finetune_unet: false
+    finetune_cross_attn: true
+    finteune_view_attn: true
+    drop_conditions: true
+
+    view_attn_config:
+      target: mvdfusion.view_attn_efficient2.GridAttn
+      params: 
+        in_channels: 5
+        input_size: 32
+        output_dim: 768
+        num_layers: 3
+        z_near_far_scale: 0.8
+        n_pts_per_ray: 1
+
+    unet_config:
+      target: mvdfusion.unet.UNetModel 
+      params:
+        image_size: 32 # unused
+        in_channels: 10
+        out_channels: 5
+        model_channels: 320
+        attention_resolutions: [ 4, 2, 1 ]
+        num_res_blocks: 2
+        channel_mult: [ 1, 2, 4, 4 ]
+        num_heads: 8
+        use_spatial_transformer: True
+        use_view_aligned_transformer: True
+        transformer_depth: 1
+        context_dim: 768
+        use_checkpoint: True
+        legacy: False
+
+    ddpm_config:
+      target: mvdfusion.scheduler.DDPMScheduler
+      params:
+        timesteps: 1000
+
+    vae_config:
+      target: external.sd1.ldm.models.autoencoder.AutoencoderKL
+      params:
+        embed_dim: 4
+        monitor: val/rec_loss
+        ddconfig:
+          double_z: true
+          z_channels: 4
+          resolution: 256
+          in_channels: 3
+          out_ch: 3
+          ch: 128
+          ch_mult:
+          - 1
+          - 2
+          - 4
+          - 4
+          num_res_blocks: 2
+          attn_resolutions: []
+          dropout: 0.0
+        lossconfig:
+          target: torch.nn.Identity
+
+dataset:
+  target: dataset.wild_test.GSO
+  scene_batch_size: 1
+  params:
+    root: 'demo_datasets/colab_eval/'
+    subset: 'test' 
+    fix_elevation: true
+    sample_batch_size: 16
+    image_size: 256
+    load_depth: true
+
+trainer:
+  epochs: 200
+  lr: 0.0001
+  train_batch_size: 5
+  input_batch_size: 1
+  random_views: true
+  grad_accum_step: 4
+  reset_optimizer: false
+
+inference:
+  train_batch_size: 15 # 7 | 15
+  input_batch_size: 1
+  random_views: false
+  cfg_scale: 2.5
+  eval_num: 30
+  vis_dir: 'vis_test_colab_eval/'
+  stage: 'test'
+
+saver:
+  ckpt_path: 'weights/mvdfusion_sep23.pt'
+  exp_dir: 'demo/'
+  log_dir: 'slurmlogs/'
+  vis_dir: 'vis_train2/'
+  loss_dir: 'loss/'
+  loss_interval: 100
+  print_interval: 100
+  vis_interval: 400
+  save_interval: 2000
+  overwrite_x_noisy: false
+  concat_input: true
+  regression: false
+  visualizer:
+    rows: ['input', 'pred', 'gt']
+    vis_batch_size: 8
