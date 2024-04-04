@@ -44,6 +44,7 @@ class GSO(torch.utils.data.Dataset):
 
         with open(subset_list_addr) as fp:
             self.subset_list = json.load(fp)
+
         
         self.azimuths = torch.tensor([0.0, 0.39269909262657166, 0.7853981852531433, 1.1780972480773926, 1.5707963705062866, 
                 1.9634953737258911, 2.356194496154785, 2.7488934993743896, 3.1415927410125732, 3.5342917442321777, 
@@ -65,17 +66,17 @@ class GSO(torch.utils.data.Dataset):
     def __getitem__(self, index):
 
         #@ LOAD SCENE FOLDER
-        scene_dir = f'{self.root}/{self.subset_list[index]}/'
-        scene_list = glob.glob(scene_dir + '*.png')
+        scene_dir = f'{self.root}/{self.subset_list[index]}'
+        scene_list = glob.glob(scene_dir)
 
-        if self.camera_type == 'fixed_set':
-            assert len(scene_list) == 32
+        assert len(scene_list) == 1
 
         #@ GET BATCH IDX
         batch_idx = torch.arange(0, 16)
 
         #@ LOAD DATA
-        images = self._load_images(scene_dir, batch_idx)
+        images = self._load_images(scene_list[0])
+        images = images.expand(16, -1, -1, -1)
 
         R, T, f, c, azimuth, elevation = self._load_fixed_set_cameras(batch_idx)
         #@ RETURN DICT
@@ -93,21 +94,20 @@ class GSO(torch.utils.data.Dataset):
 
         return frame_dict
 
-    def _load_images(self, image_dir, batch_idx):
+    def _load_images(self, img_path):
 
         rgb_list = []
 
-        for idx in batch_idx:
-            rgb_addr = f'{image_dir}/{idx:03d}.png'
-            rgb = imageio.v3.imread(rgb_addr)
-            rgb = resize(rgb, (self.image_size, self.image_size))
-            rgb = torch.tensor(rgb, dtype=torch.float32)
-            alpha = rgb[...,3:].clone()
-            rgb = rgb[...,:3]
-            rgb[...,0:1][alpha < 0.5] = 1.0
-            rgb[...,1:2][alpha < 0.5] = 1.0
-            rgb[...,2:3][alpha < 0.5] = 1.0
-            rgb_list.append(rgb)
+        rgb_addr = img_path
+        rgb = imageio.v3.imread(rgb_addr)
+        rgb = resize(rgb, (self.image_size, self.image_size))
+        rgb = torch.tensor(rgb, dtype=torch.float32)
+        alpha = rgb[...,3:].clone()
+        rgb = rgb[...,:3]
+        rgb[...,0:1][alpha < 0.5] = 1.0
+        rgb[...,1:2][alpha < 0.5] = 1.0
+        rgb[...,2:3][alpha < 0.5] = 1.0
+        rgb_list.append(rgb)
 
         images = torch.stack(rgb_list, dim=0)
         images = rearrange(images, 'b h w c -> b c h w')
@@ -138,9 +138,7 @@ class GSO(torch.utils.data.Dataset):
                 up=((0, 1, 0),),
             )
         else: raise NotImplementedError
-        # print('R', R.shape, 'T', T.shape)
-        # print('focal', focal_x, focal_y)
-        # print('principal_point', principal_point)
+
         self.cameras_b32 = PerspectiveCameras(
                                 R=R, 
                                 T=T, 

@@ -74,11 +74,11 @@ model:
           target: torch.nn.Identity
 
 dataset:
-  target: dataset.gso_test.GSO
+  target: dataset.wild_test.GSO
   scene_batch_size: 1
   params:
-    root: 'demo_datasets/gso_eval/'
-    subset: 'test_syncdreamer' #'100k'
+    root: 'demo_datasets/wild_eval/'
+    subset: 'test' 
     fix_elevation: true
     sample_batch_size: 16
     image_size: 256
@@ -99,7 +99,7 @@ inference:
   random_views: false
   cfg_scale: 2.5
   eval_num: 30
-  vis_dir: 'vis_test_wild_eval/'
+  vis_dir: 'vis_test_gso_eval/'
   stage: 'test'
 
 saver:
