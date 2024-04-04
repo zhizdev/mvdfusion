@@ -40,11 +40,12 @@ class GSO(torch.utils.data.Dataset):
         self.fix_elevation = fix_elevation
         self.up_vec = up_vec
         subset_list_addr = f'{root}/{subset}.json'
-        assert os.path.exists(subset_list_addr), 'subset not found'
 
-        with open(subset_list_addr) as fp:
-            self.subset_list = json.load(fp)
-
+        if os.path.exists(subset_list_addr):
+            with open(subset_list_addr) as fp:
+                self.subset_list = json.load(fp)
+        else:
+            self.subset_list = os.listdir(root)
         
         self.azimuths = torch.tensor([0.0, 0.39269909262657166, 0.7853981852531433, 1.1780972480773926, 1.5707963705062866, 
                 1.9634953737258911, 2.356194496154785, 2.7488934993743896, 3.1415927410125732, 3.5342917442321777, 
