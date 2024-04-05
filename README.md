@@ -37,7 +37,7 @@ We provide two evaluation dataset, Google Scanned Objects (GSO) and SyncDreamer 
 
 ## Pretrained Weights
 MVD-Fusion requires Zero-1-to-3 weights, CLIP ViT weights, and finetuned MVD-Fusion weights. 
-1. Find MVD-Fusion weights [here](/grogu/datasets/objaverse/gso_teaser) and download them to `weights/`, a full set of weights will have `weights/clip_vit_14.ckpt`, `weights/mvdfusion_sep23.pt`, and `weights/zero123_105000_cc.ckpt`.
+1. Find MVD-Fusion weights [here](https://huggingface.co/zhizdev/mvd-fusion/tree/main) and download them to `weights/`, a full set of weights will have `weights/clip_vit_14.ckpt`, `weights/mvdfusion_sep23.pt`, and `weights/zero123_105000_cc.ckpt`.
 
 ## Evaluation
 
