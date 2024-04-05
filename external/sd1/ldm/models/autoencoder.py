@@ -3,7 +3,7 @@ import pytorch_lightning as pl
 import torch.nn.functional as F
 from contextlib import contextmanager
 
-from taming.modules.vqvae.quantize import VectorQuantizer2 as VectorQuantizer
+# from taming.modules.vqvae.quantize import VectorQuantizer2 as VectorQuantizer
 
 from external.sd1.ldm.modules.diffusionmodules.model import Encoder, Decoder
 from external.sd1.ldm.modules.distributions.distributions import DiagonalGaussianDistribution
@@ -30,6 +30,7 @@ class VQModel(pl.LightningModule):
                  use_ema=False
                  ):
         super().__init__()
+        assert False, 'not supported in this repo'
         self.embed_dim = embed_dim
         self.n_embed = n_embed
         self.image_key = image_key

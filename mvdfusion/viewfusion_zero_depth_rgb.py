@@ -89,7 +89,7 @@ class ViewFusion(nn.Module):
             raise NotImplementedError
 
         #@ INIT DDIM SAMPLER
-        self.ddim = DDIMSampler(self, ddim_num_steps=200, ddim_discretize="uniform", ddim_eta=1.0, latent_size=32, z_dim=4, feed_prev_depth=feed_prev_depth)
+        self.ddim = DDIMSampler(self, ddim_num_steps=50, ddim_discretize="uniform", ddim_eta=1.0, latent_size=32, z_dim=4, feed_prev_depth=feed_prev_depth)
 
         #@ ASSERT CHECKS
         assert self.finetune_view_attn is True, 'must finetune new view attention layers'

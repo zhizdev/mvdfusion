@@ -24,5 +24,4 @@ kornia
 timm
 ftfy
 regex
-git+https://github.com/CompVis/taming-transformers.git@master#egg=taming-transformers
 git+https://github.com/openai/CLIP.git

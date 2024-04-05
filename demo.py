@@ -58,6 +58,7 @@ def train(gpu, args):
     eta_min = 0.0
     eta_hours = 0.0
     config['inference']['eval_num'] = config['inference'].get('eval_num', 20)
+    config['inference']['eval_num'] = min(config['inference']['eval_num'], len(train_dataset))
 
     total_val_list = torch.arange(config['inference']['eval_num'])
     val_list = split_list(total_val_list, args.gpus)[gpu]
@@ -81,7 +82,7 @@ def train(gpu, args):
 
         #@ INFERENCE
         with torch.no_grad():
-            model_outputs = model.module.sample(batch, inference_config, cfg_scale=inference_config['cfg_scale'], return_input=True, depth=True, verbose=False)
+            model_outputs = model.module.sample(batch, inference_config, cfg_scale=inference_config['cfg_scale'], return_input=True, depth=True, verbose=True)
 
         if len(model_outputs) == 3:
             model_output, batch_latents, input_latents = model_outputs
@@ -110,14 +111,12 @@ def train(gpu, args):
 
         #@ SAVE IMAGE
         vis = vis_pred_wide
-        vis_top = vis_gt_wide
-        vis = np.vstack((vis, vis_top))
         imageio.imwrite(jpg_path, (vis*255).astype(np.uint8))
 
         #@ SAVE GIF
         with imageio.get_writer(gif_path, mode='I', duration=0.2) as writer:
                 for j in range(len(vis_pred)):
-                    vis_single = np.hstack((vis_pred[j], gt_rgb[j]))
+                    vis_single = np.hstack((gt_rgb[j], vis_pred[j]))
                     writer.append_data(((vis_single)*255).astype(np.uint8))
         print('saved video', gif_path)
 
@@ -135,8 +134,6 @@ def train(gpu, args):
         vis_input_depth = np.hstack(input_depth)
         vis_gt_depth = np.hstack(gt_depth)
         vis_depth = np.hstack((vis_input_depth, vis_pred_depth))
-        vis_depth_top = np.hstack((vis_input_depth, vis_gt_depth))
-        vis_depth = np.vstack((vis_depth_top, vis_depth))
         imageio.imwrite(jpg_path.replace('.jpg', '_depth.png'), (vis_depth*255).astype(np.uint8))
 
         depth_npz_path = jpg_path.replace('.jpg', '_depth.npy')
@@ -146,7 +143,7 @@ def train(gpu, args):
         gif_path = jpg_path.replace('.jpg', '_depth.gif')
         with imageio.get_writer(gif_path, mode='I', duration=0.2) as writer:
             for j in range(len(vis_pred)):
-                vis_single = np.hstack((pred_depth[j], gt_depth[j]))
+                vis_single = np.hstack((pred_depth[j]))
                 writer.append_data(((vis_single)*255).astype(np.uint8))
             
 
