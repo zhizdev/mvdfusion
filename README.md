@@ -6,7 +6,7 @@
 [Varun Jampani](https://varunjampani.github.io/),
 [Shubham Tulsiani](https://shubhtuls.github.io/)<br/>
 *Equal contribution<br/>
-_CVPR 2024 | [GitHub](https://github.com/zhizdev/mvdfusion) | [arXiv]() | [Project page](https://mvd-fusion.github.io/)_
+_CVPR 2024 | [GitHub](https://github.com/zhizdev/mvdfusion) | [arXiv](https://arxiv.org/abs/2404.03656) | [Project page](https://mvd-fusion.github.io/)_
 
 ![txt2img-stable2](media/teaser.jpg)
 Given an input RGB image, **MVD-Fusion** generates multi-view RGB-D images using a depth-guided attention mechanism for enforcing multi-view consistency. We visualize the input RGB image (left) and three synthesized novel views (with generated depth in inset).
