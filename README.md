@@ -17,6 +17,11 @@ This project is built on top of open-source code. We thank the open-source resea
 
 
 ## Code
+
+Colab demo! 
+
+ [![Open In Colab](media/colab.svg)](https://colab.research.google.com/drive/1xbb_15DVx0sXcMFxvsWBGTqAdF_AcRXd?usp=sharing) 
+
 Our code release contains:
 
 1. Code for inference
