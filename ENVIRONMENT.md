@@ -50,6 +50,5 @@ pip install -e git+https://github.com/CompVis/taming-transformers.git@master#egg
 
 ### Install Other MVD-Fusion Requirements
 ```bash
-cd sparsefusion
 pip install -r requirements.txt
 ```
