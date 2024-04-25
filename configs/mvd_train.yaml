@@ -1,6 +1,6 @@
 model:
   base_learning_rate: 1.0e-04
-  target: viewfusion.viewfusion_v2.ViewFusion
+  target: mvdfusion.viewfusion_zero_depth_rgb.ViewFusion
   params:
     vae_path: weights/zero123_105000.ckpt
     clip_path: weights/clip_vit_14.ckpt
@@ -18,7 +18,7 @@ model:
     drop_conditions: true
 
     view_attn_config:
-      target: viewfusion.view_attn_v2.GridAttn
+      target: mvdfusion.view_attn_efficient2.GridAttn
       params: 
         in_channels: 5
         input_size: 32
@@ -28,7 +28,7 @@ model:
         n_pts_per_ray: 1
 
     unet_config:
-      target: viewfusion.unet_v2.UNetModel 
+      target: mvdfusion.unet.UNetModel 
       params:
         image_size: 32 # unused
         in_channels: 10
@@ -39,15 +39,14 @@ model:
         channel_mult: [ 1, 2, 4, 4 ]
         num_heads: 8
         use_spatial_transformer: True
-        use_view_aligned_transformer: False
-        use_multiview_attention: True
+        use_view_aligned_transformer: True
         transformer_depth: 1
         context_dim: 768
         use_checkpoint: True
         legacy: False
 
     ddpm_config:
-      target: viewfusion.scheduler.DDPMScheduler
+      target: mvdfusion.scheduler.DDPMScheduler
       params:
         timesteps: 1000
 
@@ -78,9 +77,8 @@ dataset:
   target: dataset.objaverse.Objaverse
   scene_batch_size: 1
   params:
-    # root: '/drive/objaverse/render_sep_2023/'
-    root: '/grogu/datasets/objaverse/render_sep_2023/'
-    subset: '400k' #'100k'
+    root: 'objaverse/renders/'
+    subset: '400k'
     fix_elevation: true
     sample_batch_size: 16
     image_size: 256

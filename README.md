@@ -68,9 +68,9 @@ Output artifact will be saved to `demo/` by default.
 
 ## Training
 
-*Training code is arriving soon!
+* Zero123 weights are required for training (for initialization). Please download them and extract them to `weights/zero123_105000.ckpt`.
 
-Early access training code is provided in `train.py`. Please follow the evaluation tutorial above to setup the environment and pretrained  weights. It is recommended to directly modify `configs/mvd_train.yaml` to specify the experiment directory and set the training hyperparameters. We show training flags below. We recommend a minimum of 4 GPUs for training. 
+Sample training code is provided in `train.py`. Please follow the evaluation tutorial above to setup the environment and pretrained  weights. It is recommended to directly modify `configs/mvd_train.yaml` to specify the experiment directory and set the training hyperparameters. We show training flags below. We recommend a minimum of 4 GPUs for training. 
 
 ```shell
 $ python demo.py -c configs/mvd_train.yaml -g 4
