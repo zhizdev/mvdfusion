@@ -8,7 +8,6 @@ import torch
 from pytorch3d.common.compat import meshgrid_ij
 from pytorch3d.ops import padded_to_packed
 from pytorch3d.renderer.cameras import CamerasBase
-# from pytorch3d.renderer.implicit.utils import HeterogeneousRayBundle, RayBundle
 from torch.nn import functional as F
 from einops import rearrange
 
