@@ -25,7 +25,7 @@ model:
         output_dim: 768
         num_layers: 3
         z_near_far_scale: 0.8
-        n_pts_per_ray: 1
+        n_pts_per_ray: 3
 
     unet_config:
       target: mvdfusion.unet.UNetModel 
